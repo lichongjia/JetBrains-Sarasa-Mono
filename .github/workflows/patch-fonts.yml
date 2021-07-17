@@ -5,6 +5,8 @@ on:
   push:
     tags:
       - v*.*.*
+  # 允许手动触发
+  workflow_dispatch:
 
 jobs:
   build:
