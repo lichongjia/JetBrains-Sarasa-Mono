@@ -1,0 +1,35 @@
+# 检查是否有新版本的更纱黑体
+name: Create tag if there's a new Sarasa Gothic version
+
+on:
+  # 每12小时
+  schedule:
+    - cron: "0 */12 * * *"
+  # 允许手动触发
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: github.repository == 'lichongjia/JetBrains-Sarasa-Mono'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.WORKFLOW_TOKEN }}
+      - name: Magic 😎
+        run: |
+          # 查找最新版本号
+          LATEST_TAG=`curl --silent "https://api.github.com/repos/be5invis/Sarasa-Gothic/releases/latest" | jq -r .tag_name`
+          echo "Latest tag of be5invis/Sarasa-Gothic is ${LATEST_TAG}"
+
+          # 检查是否已经存在匹配的版本号
+          if git rev-parse "$LATEST_TAG" >/dev/null 2>&1; then
+            echo "${LATEST_TAG} tag exists, do nothing.";
+          else
+            echo "${LATEST_TAG} tag does not exist, tag it to trigger next action."
+            git config user.name github-actions
+            git config user.email github-actions@github.com
+            git tag -a ${LATEST_TAG} -m "🎉 build: release version ${LATEST_TAG}"
+            git push origin --tags
+          fi

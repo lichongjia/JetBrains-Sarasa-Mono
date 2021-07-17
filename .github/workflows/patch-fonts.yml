@@ -1,0 +1,53 @@
+# 字体修补
+name: Generate Patched Fonts
+
+on:
+  push:
+    tags:
+      - v*.*.*
+
+jobs:
+  build:
+    if: github.repository == 'lichongjia/JetBrains-Sarasa-Mono'
+    runs-on: ubuntu-latest
+    env:
+      NERD_FONTS_VERSION: v2.1.0
+    steps:
+      - uses: actions/checkout@v2
+      # 下载 更纱黑体
+      - name: Download latest version of Sarasa Gothic
+        run: |
+          LATEST_TAG=`curl --silent "https://api.github.com/repos/be5invis/Sarasa-Gothic/releases/latest" | jq -r .tag_name`
+          echo Downloading Sarasa Gothic ${LATEST_TAG}
+          curl -L https://github.com/be5invis/Sarasa-Gothic/releases/download/${LATEST_TAG}/sarasa-gothic-ttf-${LATEST_TAG:1}.7z -O
+          7z x *.7z
+      # 安装 FontForge
+      - name: Install FontForge
+        run: sudo apt install fontforge -y
+      # 下载 字体修补文件
+      - name: Download Font Patcher
+        run: curl -L https://raw.githubusercontent.com/ryanoasis/nerd-fonts/${NERD_FONTS_VERSION}/font-patcher --output font-patcher
+      # 下载 Nerd Font修补字体
+      - name: Download nerd fonts
+        run: sh download-nerd-fonts.sh
+      #  安装 依赖
+      - name: Install configparser
+        run: pip install configparser
+      # 执行 修补
+      - name: Patch fonts
+        run: fontforge -script font-patcher --careful --complete --no-progressbars --quiet sarasa-mono-sc-regular.ttf
+      # 重命名 修补完的字体
+      - name: Rename patched font file
+        run: mv 'Sarasa Mono SC Nerd Font Complete.ttf' Sarasa-Mono-SC-Nerd-Font-Complete.ttf
+      - uses: actions/upload-artifact@master
+        with:
+          name: Sarasa Mono SC Nerd Font Complete
+          path: Sarasa-Mono-SC-Nerd-Font-Complete.ttf
+      # 发布到 Release
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: Sarasa-Mono-SC-Nerd-Font-Complete.ttf
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
