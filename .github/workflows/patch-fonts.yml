@@ -50,4 +50,4 @@ jobs:
         with:
           files: Sarasa-Mono-SC-Nerd-Font-Complete.ttf
         env:
-          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
